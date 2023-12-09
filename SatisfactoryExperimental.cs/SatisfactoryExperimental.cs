@@ -5,7 +5,6 @@ using WindowsGSM.Functions;
 using WindowsGSM.GameServer.Query;
 using WindowsGSM.GameServer.Engine;
 using System.IO;
-using System.ComponentModel.DataAnnotations;
 
 namespace WindowsGSM.Plugins
 {
