@@ -135,10 +135,10 @@ namespace WindowsGSM.Plugins
 
         public async Task<Process> Install()
         {
-            var custom = "-beta experimental";
-            var (p, error) = await Installer.SteamCMD.UpdateEx(serverData.ServerID, AppId, false, custom: custom, loginAnonymous: loginAnonymous);
-            Error = error;
-            await Task.Run(() => { p.WaitForExit(); });
+            AppId = $"{AppId} -beta experimental ";
+            var steamCMD = new Installer.SteamCMD();
+            Process p = await steamCMD.Install(_serverData.ServerID, string.Empty, AppId, true, loginAnonymous);
+            Error = steamCMD.Error;
             return p;
         }
         public async Task<Process> Update(bool validate = false, string custom = null)
