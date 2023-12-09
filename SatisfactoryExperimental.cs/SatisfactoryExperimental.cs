@@ -5,6 +5,7 @@ using WindowsGSM.Functions;
 using WindowsGSM.GameServer.Query;
 using WindowsGSM.GameServer.Engine;
 using System.IO;
+using System.ComponentModel.DataAnnotations;
 
 namespace WindowsGSM.Plugins
 {
@@ -32,7 +33,7 @@ namespace WindowsGSM.Plugins
 
 
         // - Game server Fixed variables
-        public override string StartPath => @"Engine\Binaries\Win64\UnrealServer-Win64-Shipping.exe"; // Game server start path
+        public override string StartPath => "FactoryServer.exe"; // Game server start path
         public string FullName = "Satisfactory Experimental Dedicated Server"; // Game server FullName
         public bool AllowsEmbedConsole = true;  // Does this server support output redirect?
         public int PortIncrements = 1; // This tells WindowsGSM how many ports should skip after installation
@@ -71,7 +72,7 @@ namespace WindowsGSM.Plugins
             // Prepare start parameter
             string param = "";
             param += $" {_serverData.ServerParam}";
-            param += string.IsNullOrWhiteSpace(_serverData.ServerPort) ? string.Empty : $" -Port={_serverData.ServerPort}"; 
+            param += string.IsNullOrWhiteSpace(_serverData.ServerPort) ? string.Empty : $" -Port={_serverData.ServerPort}";
             param += string.IsNullOrWhiteSpace(_serverData.ServerQueryPort) ? string.Empty : $" -ServerQueryPort={_serverData.ServerQueryPort}";
             param += string.IsNullOrWhiteSpace(_serverData.ServerQueryPort) ? string.Empty : $" -BeaconPort={_serverData.ServerQueryPort + 1}";
             param += string.IsNullOrWhiteSpace(_serverData.ServerMaxPlayer) ? string.Empty : $" -MaxPlayers={_serverData.ServerMaxPlayer}";
@@ -122,7 +123,6 @@ namespace WindowsGSM.Plugins
             }
         }
 
-
         // - Stop server function
         public async Task Stop(Process p)
         {
@@ -134,6 +134,14 @@ namespace WindowsGSM.Plugins
             });
         }
 
+        public async Task<Process> Install()
+        {
+            var custom = "-beta experimental";
+            var (p, error) = await Installer.SteamCMD.UpdateEx(serverData.ServerID, AppId, false, custom: custom, loginAnonymous: loginAnonymous);
+            Error = error;
+            await Task.Run(() => { p.WaitForExit(); });
+            return p;
+        }
         public async Task<Process> Update(bool validate = false, string custom = null)
         {
             if (custom == null)
@@ -144,5 +152,25 @@ namespace WindowsGSM.Plugins
             return p;
         }
 
+        public bool IsInstallValid()
+        {
+            return File.Exists(ServerPath.GetServersServerFiles(_serverData.ServerID, StartPath));
+        }
+        public bool IsImportValid(string path)
+        {
+            string importPath = Path.Combine(path, StartPath);
+            Error = $"Invalid Path! Fail to find {Path.GetFileName(StartPath)}";
+            return File.Exists(importPath);
+        }
+        public string GetLocalBuild()
+        {
+            var steamCMD = new Installer.SteamCMD();
+            return steamCMD.GetLocalBuild(_serverData.ServerID, AppId);
+        }
+        public async Task<string> GetRemoteBuild()
+        {
+            var steamCMD = new Installer.SteamCMD();
+            return await steamCMD.GetRemoteBuild(AppId);
+        }
     }
 }
